@@ -68,13 +68,6 @@
         state: started
         enabled: true
 
-    - name: Enable tang server
-      ansible.builtin.systemd_service:
-        name: tang
-        state: started
-        enabled: true
-
-
 - name: DNS Server
   hosts: routers
   become: true
