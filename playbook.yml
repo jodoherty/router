@@ -22,6 +22,8 @@
     - name: Install networking tools
       ansible.builtin.apt:
         pkg:
+        - ca-certificates
+        - curl
         - bridge-utils
         - resolvconf
         - nftables
@@ -72,17 +74,42 @@
   hosts: routers
   become: true
   handlers:
-    - name: Restart bind9
-      debug:
-        msg: "Restart bind9"
+    - name: Restart unbound
+      ansible.builtin.systemd_service:
+        name: unbound
+        state: restarted
+
   tasks:
     - name: Install DNS packages
       ansible.builtin.apt:
         pkg:
-        - bind9
-        - bind9-doc
+        - unbound
+        - unbound-anchor
+        - bind9-utils
         - bind9-dnsutils
         state: present
+
+    - name: Configure unbound
+      ansible.builtin.copy:
+        dest: /etc/unbound/unbound.conf.d/local-dns-server.conf
+        content: |
+          server:
+            interface: lo@53
+            interface: {{ lan_bridge }}@53
+            {% if management_interface is defined -%}
+            interface: {{ management_interface }}@53
+            {%- endif %}
+            access-control: {{ address | ansible.utils.ipaddr("network/prefix") }} allow
+            {% if management_address is defined -%}
+            access-control: {{ management_address | ansible.utils.ipaddr("network/prefix") }} allow
+            {%- endif %}
+      notify: Restart unbound
+
+    - name: Enable unbound
+      ansible.builtin.systemd_service:
+        name: unbound
+        state: started
+        enabled: true
 
 - name: DHCP Server
   hosts: routers
@@ -116,7 +143,7 @@
       ansible.builtin.lineinfile:
         path: /etc/dhcp/dhcpd.conf
         regexp: '^option domain-name-servers '
-        line: 'option domain-name-servers {{ dns_servers["ipv4"] | join(", ") }};'
+        line: 'option domain-name-servers {{ address | ansible.utils.ipaddr("address") }};'
       notify: Restart isc-dhcp-server
 
     - name: Configure DHCP subnet
