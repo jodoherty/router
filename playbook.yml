@@ -26,6 +26,10 @@
         - curl
         - bridge-utils
         - resolvconf
+        - isc-dhcp-client
+        - ipv6calc
+        - net-tools
+        - ethtool
         - nftables
         - tang
         state: present
@@ -34,6 +38,15 @@
       ansible.builtin.hostname:
         name: "{{ hostname }}"
       when: hostname is defined
+
+    - name: Add isc-dhcp-client prefix delegation hook
+      ansible.builtin.template:
+        src: templates/prefix_delegation.j2
+        dest: /etc/dhcp/dhclient-exit-hooks.d/prefix_delegation
+        owner: root
+        group: root
+        mode: '0755'
+      notify: Restart networking
 
     - name: Configure interfaces
       ansible.builtin.template:
@@ -103,6 +116,11 @@
             {% if management_address is defined -%}
             access-control: {{ management_address | ansible.utils.ipaddr("network/prefix") }} allow
             {%- endif %}
+            access-control: fd00::/8 allow
+            access-control: fe80::/10 allow
+        mode: '0644'
+        owner: root
+        group: root
       notify: Restart unbound
 
     - name: Enable unbound
@@ -175,9 +193,41 @@
 - name: radvd
   hosts: routers
   become: true
+  handlers:
+    - name: Restart radvd
+      ansible.builtin.systemd_service:
+        name: radvd
+        state: restarted
+
   tasks:
     - name: Install radvd
       ansible.builtin.apt:
         pkg: radvd
         state: present
 
+    - name: Configure radvd
+      ansible.builtin.copy:
+        dest: /etc/radvd.conf
+        content: |
+          interface br0 {
+            AdvSendAdvert on;
+            MinRtrAdvInterval 3;
+            MaxRtrAdvInterval 10;
+            prefix ::/64 {
+              AdvOnLink on;
+              AdvAutonomous on;
+              AdvRouterAddr on;
+              AdvValidLifetime 3600;
+              AdvPreferredLifetime 3600;
+            };
+          };
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart radvd
+
+    - name: Enable radvd
+      ansible.builtin.systemd_service:
+        name: radvd
+        state: started
+        enabled: true
