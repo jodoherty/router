@@ -11,11 +11,16 @@ table inet filter {
     ct state {established, related} accept
     iif lo accept
 
-    iifname "{{ lan_bridge }}" udp dport {53, 67, 80} accept
+    iifname {"{{ lan_bridge }}"{% if management_interface is defined -%}
+    , "{{management_interface}}"
+    {%- endif %}} tcp dport {22, 80} accept
+    iifname {"{{ lan_bridge }}"{% if management_interface is defined -%}
+    , "{{management_interface}}"
+    {%- endif %}} udp dport {53, 67, 547} accept
+    iifname "{{ wan_interface }}" udp dport 546 accept
 
     ip protocol icmp accept
     meta l4proto ipv6-icmp accept
-    tcp dport ssh accept
 
     iifname "{{ lan_bridge }}" udp dport mdns ip6 daddr ff02::fb accept
     iifname "{{ lan_bridge }}" udp dport mdns ip daddr 224.0.0.251 accept

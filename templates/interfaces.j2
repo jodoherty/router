@@ -14,9 +14,8 @@ iface {{ wan_interface }} inet dhcp
   dns-nameserver {{ server }}
 {% endfor %}
 iface {{ wan_interface }} inet6 auto
-#iface {{ wan_interface }} inet6 dhcp
-#  accept_ra 1
-#  request_prefix 1
+  accept_ra 2
+  request_prefix 0
 
 auto {{ lan_bridge }}
 iface {{ lan_bridge }} inet static
