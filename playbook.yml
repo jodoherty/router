@@ -1,8 +1,60 @@
 ---
-- name: Configure router
+- name: networking
   hosts: routers
-  tasks:
-    - name: Show hostname
+  become: true
+  handlers:
+    - name: Restart networking
       debug:
-        msg: "{{ hostname }}"
+        msg: "Restarting networking"
+  tasks:
+    - name: Install networking tools
+      ansible.builtin.apt:
+        pkg:
+        - bridge-utils
+        - resolvconf
+        - nftables
+        state: present
+    - name: Show interfaces
+      debug:
+        msg: "{{ interfaces }}"
+
+- name: DNS Server
+  hosts: routers
+  become: true
+  handlers:
+    - name: Restart bind9
+      debug:
+        msg: "Restart bind9"
+  tasks:
+    - name: Install DNS packages
+      ansible.builtin.apt:
+        pkg:
+        - bind9
+        - bind9-doc
+        - bind9-dnsutils
+        state: present
+
+
+- name: DHCP Server
+  hosts: routers
+  become: true
+  handlers:
+    - name: Restart isc-dhcp-server
+      debug:
+        msg: "Restart isc-dhcp-server"
+  tasks:
+    - name: Install isc-dhcp-server
+      ansible.builtin.apt:
+        pkg: isc-dhcp-server
+        state: present
+
+
+- name: radvd
+  hosts: routers
+  become: true
+  tasks:
+    - name: Install radvd
+      ansible.builtin.apt:
+        pkg: radvd
+        state: present
 
