@@ -1,11 +1,23 @@
 ---
+
 - name: networking
   hosts: routers
   become: true
   handlers:
     - name: Restart networking
-      debug:
-        msg: "Restarting networking"
+      ansible.builtin.systemd_service:
+        name: networking
+        state: restarted
+
+    - name: Reload sysctl
+      ansible.builtin.command:
+        cmd: sysctl --system
+
+    - name: Restart nftables
+      ansible.builtin.systemd_service:
+        name: nftables
+        state: restarted
+
   tasks:
     - name: Install networking tools
       ansible.builtin.apt:
@@ -13,10 +25,55 @@
         - bridge-utils
         - resolvconf
         - nftables
+        - tang
         state: present
-    - name: Show interfaces
-      debug:
-        msg: "{{ interfaces }}"
+
+    - name: Configure hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+      when: hostname is defined
+
+    - name: Configure interfaces
+      ansible.builtin.template:
+        src: templates/interfaces.j2
+        dest: /etc/network/interfaces
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart networking
+
+    - name: Enable IP Forwarding
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/forwarding.conf
+        content: |
+          net.ipv4.ip_forward = 1
+          net.ipv6.conf.all.forwarding = 1
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload sysctl
+
+    - name: Configure firewall
+      ansible.builtin.template:
+        src: templates/nftables.conf.j2
+        dest: /etc/nftables.conf
+        owner: root
+        group: root
+        mode: '0755'
+      notify: Restart nftables
+
+    - name: Enable nftables
+      ansible.builtin.systemd_service:
+        name: nftables
+        state: started
+        enabled: true
+
+    - name: Enable tang server
+      ansible.builtin.systemd_service:
+        name: tang
+        state: started
+        enabled: true
+
 
 - name: DNS Server
   hosts: routers
@@ -34,19 +91,65 @@
         - bind9-dnsutils
         state: present
 
-
 - name: DHCP Server
   hosts: routers
   become: true
   handlers:
     - name: Restart isc-dhcp-server
-      debug:
-        msg: "Restart isc-dhcp-server"
+      ansible.builtin.systemd_service:
+        name: isc-dhcp-server
+        state: restarted
   tasks:
     - name: Install isc-dhcp-server
       ansible.builtin.apt:
         pkg: isc-dhcp-server
         state: present
+
+    - name: Enable DHCP server on {{ lan_bridge }}
+      ansible.builtin.lineinfile:
+        path: /etc/default/isc-dhcp-server
+        regexp: '^INTERFACESv4='
+        line: 'INTERFACESv4="{{ lan_bridge }}"'
+      notify: Restart isc-dhcp-server
+
+    - name: Set domain name
+      ansible.builtin.lineinfile:
+        path: /etc/dhcp/dhcpd.conf
+        regexp: '^option domain-name '
+        line: 'option domain-name "{{ domain }}";'
+      notify: Restart isc-dhcp-server
+
+    - name: Set DHCP DNS servers
+      ansible.builtin.lineinfile:
+        path: /etc/dhcp/dhcpd.conf
+        regexp: '^option domain-name-servers '
+        line: 'option domain-name-servers {{ dns_servers["ipv4"] | join(", ") }};'
+      notify: Restart isc-dhcp-server
+
+    - name: Configure DHCP subnet
+      ansible.builtin.blockinfile:
+        path: /etc/dhcp/dhcpd.conf
+        content: |
+          authoritative;
+
+          subnet {{ address | ansible.utils.ipaddr('network') }} netmask {{ address | ansible.utils.ipaddr('netmask') }} {
+            range {{ dhcp_range_start }} {{ dhcp_range_end }};
+            option routers {{ address | ansible.utils.ipaddr('address') }};
+          }
+
+          {% for host in dhcp_reservations %}
+          host {{ host.name }} {
+            hardware ethernet {{ host.mac }};
+            fixed-address {{ host.address | ansible.utils.ipv4('address') }};
+          }
+          {% endfor %}
+      notify: Restart isc-dhcp-server
+
+    - name: Enable isc-dhcp-server
+      ansible.builtin.systemd_service:
+        name: isc-dhcp-server
+        state: started
+        enabled: true
 
 
 - name: radvd

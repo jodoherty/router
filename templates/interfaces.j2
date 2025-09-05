@@ -1,0 +1,43 @@
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+source /etc/network/interfaces.d/*
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The WAN interface
+allow-hotplug {{ wan_interface }}
+iface {{ wan_interface }} inet dhcp
+{% for server in dns_servers["ipv4"] %}
+  dns-nameserver {{ server }}
+{% endfor %}
+iface {{ wan_interface }} inet6 auto
+#iface {{ wan_interface }} inet6 dhcp
+#  accept_ra 1
+#  request_prefix 1
+
+auto {{ lan_bridge }}
+iface {{ lan_bridge }} inet static
+  bridge_ports {{ lan_interfaces | join(" ") }}
+  address {{ address }}
+  {% for iface in lan_interfaces -%}
+  up ip link set {{ iface }} up
+  {% endfor -%}
+  up ip link set {{ lan_bridge }} up
+
+iface {{ lan_bridge }} inet6 manual
+
+{% if ula is defined %}
+iface {{ lan_bridge }} inet6 static
+  address {{ ula["address"] }}
+  netmask {{ ula["netmask"] }}
+{% endif %}
+
+{% if management_interface is defined %}
+# The management interface
+allow-hotplug {{ management_interface }}
+iface {{ management_interface }} inet static
+  address {{ management_address }}
+{% endif %}
