@@ -200,8 +200,8 @@
               AdvOnLink on;
               AdvAutonomous on;
               AdvRouterAddr on;
-              AdvValidLifetime 3600;
-              AdvPreferredLifetime 3600;
+              AdvValidLifetime 600;
+              AdvPreferredLifetime 600;
               DecrementLifetimes on;
               DeprecatePrefix on;
             };
