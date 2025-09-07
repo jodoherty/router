@@ -45,6 +45,19 @@
         mode: '0644'
       notify: Reload sysctl
 
+    - name: Ignore IPv6 router advertisements on LAN interface
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/lan_ipv6_options.conf
+        content: |
+          net.ipv6.conf.{{ wan_interface }}.accept_ra = 2
+          net.ipv6.conf.{{ lan_interface }}.accept_ra = 0
+          net.ipv6.conf.{{ lan_interface }}.accept_dad = 0
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload sysctl
+
+
     - name: Configure firewall
       ansible.builtin.template:
         src: templates/nftables.conf.j2
