@@ -203,7 +203,7 @@
               AdvAutonomous on;
               AdvRouterAddr on;
               DeprecatePrefix on;
-              AdvPreferredLifetime 600;
+              AdvPreferredLifetime 1800;
               AdvValidLifetime 7200;
             };
             {% if lan_ipv6_local_address is defined -%}
