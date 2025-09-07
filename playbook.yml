@@ -4,11 +4,6 @@
   hosts: routers
   become: true
   handlers:
-    - name: Restart networking
-      ansible.builtin.systemd_service:
-        name: networking
-        state: restarted
-
     - name: Reload sysctl
       ansible.builtin.command:
         cmd: sysctl --system
@@ -38,24 +33,6 @@
       ansible.builtin.hostname:
         name: "{{ hostname }}"
       when: hostname is defined
-
-    - name: Add isc-dhcp-client prefix delegation hook
-      ansible.builtin.template:
-        src: templates/prefix_delegation.j2
-        dest: /etc/dhcp/dhclient-exit-hooks.d/prefix_delegation
-        owner: root
-        group: root
-        mode: '0755'
-      notify: Restart networking
-
-    - name: Configure interfaces
-      ansible.builtin.template:
-        src: templates/interfaces.j2
-        dest: /etc/network/interfaces
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart networking
 
     - name: Enable IP Forwarding
       ansible.builtin.copy:
@@ -108,16 +85,9 @@
         content: |
           server:
             interface: lo@53
-            interface: {{ lan_bridge }}@53
-            {% if management_interface is defined -%}
-            interface: {{ management_interface }}@53
-            {%- endif %}
-            access-control: {{ address | ansible.utils.ipaddr("network/prefix") }} allow
-            {% if management_address is defined -%}
-            access-control: {{ management_address | ansible.utils.ipaddr("network/prefix") }} allow
-            {%- endif %}
-            access-control: fd00::/8 allow
-            access-control: fe80::/10 allow
+            interface: {{ lan_interface }}@53
+            access-control: 0.0.0.0/0 allow
+            access-control: ::/0 allow
         mode: '0644'
         owner: root
         group: root
@@ -143,11 +113,11 @@
         pkg: isc-dhcp-server
         state: present
 
-    - name: Enable DHCP server on {{ lan_bridge }}
+    - name: Enable DHCP server on {{ lan_interface }}
       ansible.builtin.lineinfile:
         path: /etc/default/isc-dhcp-server
         regexp: '^INTERFACESv4='
-        line: 'INTERFACESv4="{{ lan_bridge }}"'
+        line: 'INTERFACESv4="{{ lan_interface }}"'
       notify: Restart isc-dhcp-server
 
     - name: Set domain name
@@ -209,7 +179,7 @@
       ansible.builtin.copy:
         dest: /etc/radvd.conf
         content: |
-          interface br0 {
+          interface {{ lan_interface }} {
             AdvSendAdvert on;
             MinRtrAdvInterval 3;
             MaxRtrAdvInterval 10;
