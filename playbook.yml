@@ -194,15 +194,9 @@
         content: |
           interface {{ lan_interface }} {
             AdvSendAdvert on;
-            AdvManagedFlag off;
-            AdvOtherConfigFlag off;
-            MinRtrAdvInterval 200;
-            MaxRtrAdvInterval 600;
+            RemoveAdvOnExit off;
             prefix ::/64 {
-              AdvOnLink on;
-              AdvAutonomous on;
               AdvRouterAddr on;
-              DeprecatePrefix on;
               AdvPreferredLifetime 1800;
               AdvValidLifetime 7200;
             };
