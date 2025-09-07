@@ -202,6 +202,8 @@
               AdvRouterAddr on;
               AdvValidLifetime 3600;
               AdvPreferredLifetime 3600;
+              DecrementLifetimes on;
+              DeprecatePrefix on;
             };
           };
         owner: root
