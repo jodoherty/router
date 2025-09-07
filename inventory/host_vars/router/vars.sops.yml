@@ -1,5 +1,6 @@
 ansible_host: ENC[AES256_GCM,data:p3UXAIUefEfY09E=,iv:uiXNW2HsbOpGKn3hNY7CAXFFhuv8IbE3yN8JQ35ttnE=,tag:MI2wcaVhpRBB20Q73mJDdg==,type:str]
 address: ENC[AES256_GCM,data:84yVJU2sbJPMrKnWOSs=,iv:on5dY1vdF2WegZ+W/kC2AYe8WQchxF3KYM2djhfObHg=,tag:PeDs0yKhgN/1aR+VuOv1+A==,type:str]
+lan_ipv6_local_address: ENC[AES256_GCM,data:48qUkM7r/+ooieD/KsrN/Y5F4TgahwPfGw==,iv:8gZKbldk82MpsYT4ZLgLIz4VVweBL9g36+vieOGIjz8=,tag:jSRXfhBdllzQDtpJoqd3ng==,type:str]
 wan_interface: ENC[AES256_GCM,data:qs8EjVK9,iv:xbvPwpHhhY0jpS4FrV+NqcjqQ9KEcm8EugrA1oJFtwY=,tag:yJ6LIqhPLwLZdgQOgyaI0w==,type:str]
 lan_interface: ENC[AES256_GCM,data:ZYhQifR8,iv:w/8HuqXAQpLaMLHy0eyyFhr3TGLwkfihnT4BTO3hP6w=,tag:k12I3BHhGIaNhWqSwcEBBQ==,type:str]
 hostname: ENC[AES256_GCM,data:isDF7huy,iv:pqTZjucQ3yfYWK7cjI0t+4I+890NRtHV8H8aT6t19pU=,tag:ExGItJjiOf4iYhZ0k6JbQA==,type:str]
@@ -39,8 +40,8 @@ dns_servers:
         - ENC[AES256_GCM,data:8Do5Df38VYkwVzlK0fYu/iS6G0Y=,iv:92WeqqLBlvVo3kjkN9CkBS+hED2L9JNBw56O53a9Oy8=,tag:102IAxRgqD1CjTqeBH2eQg==,type:str]
         - ENC[AES256_GCM,data:rdBie7PxPCgw3luIB5ng8aru9nE=,iv:3BhqGj90vybKc/7pIw1qDcna/uZoZUMe25CQv/8OuQw=,tag:wa4JNwUgA+2ECwZfDC47Lg==,type:str]
 sops:
-    lastmodified: "2025-09-07T00:23:29Z"
-    mac: ENC[AES256_GCM,data:hLDmItSFxg8a933dKMbrb77PrG/C9L5h5mPkmG9J+W4ZBcYn1ziyQTr2xK6lSGfzUdGtMhoNf0mOQLyUiOaAGPB9sHX9ssvgTxDU3jKfzLQmzzf7NLFs+rIRlq14oxSYhBYjGjucW1qTivfsBuz2CP9VA24Oax6Fgq58jUJ4Smk=,iv:/RRN+4CC2krzl80Hl+dvMwU2iynTXnbM0MvifmHxbu8=,tag:riwH1x8MQxAFm6Cbid2Bwg==,type:str]
+    lastmodified: "2025-09-07T03:01:57Z"
+    mac: ENC[AES256_GCM,data:AhfbhlbOronXiAQFCKZFDZvEJYVXH/ZQb5bW83B94nytGSn/hWCkDZEoJp2M6/RFtEkXV0KUfAwQJ/Jqtf6UYn7mXbiShEm2tbdPpCT81lpiNvoZiTMNrShpiH27zvgtu42wwc0Xr+ufHzBfWkEUXaObz4ybIoHXJHwx74uFzJM=,iv:Hb0dESUaZjaQ16nTHFdiQsNM2my8v1cKG2z5isypVPs=,tag:rZ+YlsvnuV1x9XO1XeVDaA==,type:str]
     pgp:
         - created_at: "2025-09-04T23:23:54Z"
           enc: |-

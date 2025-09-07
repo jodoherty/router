@@ -205,6 +205,9 @@
               DecrementLifetimes on;
               DeprecatePrefix on;
             };
+            {% if lan_ipv6_local_address is defined -%}
+            RDNSS {{ lan_ipv6_local_address }} {};
+            {%- endif %}
           };
         owner: root
         group: root
