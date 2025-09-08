@@ -194,10 +194,14 @@
         content: |
           interface {{ lan_interface }} {
             AdvSendAdvert on;
+            MinRtrAdvInterval 10;
+            MaxRtrAdvInterval 30;
+            AdvDefaultLifetime 1800;
+            AdvDefaultPreference high;
             prefix ::/64 {
               AdvRouterAddr on;
-              AdvPreferredLifetime 1800;
-              AdvValidLifetime 7200;
+              AdvPreferredLifetime 180;
+              AdvValidLifetime 300;
             };
             {% if lan_ipv6_local_address is defined -%}
             RDNSS {{ lan_ipv6_local_address }} {
