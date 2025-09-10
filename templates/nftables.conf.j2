@@ -15,6 +15,8 @@ table inet filter {
     iifname "{{ lan_interface }}" udp dport {53, 67, 547} accept
     iifname "{{ wan_interface }}" udp dport 546 accept
 
+    iifname "{{ wan_interface }}" udp dport { 51820-51900 } accept
+
     ip protocol icmp accept
     meta l4proto ipv6-icmp accept
 

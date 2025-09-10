@@ -1,6 +1,6 @@
 ---
 
-- name: networking
+- name: Basic networking setup
   hosts: routers
   become: true
   handlers:
@@ -56,7 +56,6 @@
         group: root
         mode: '0644'
       notify: Reload sysctl
-
 
     - name: Configure firewall
       ansible.builtin.template:
@@ -173,7 +172,7 @@
         enabled: true
 
 
-- name: radvd
+- name: IPv6 Prefix Delegation Setup
   hosts: routers
   become: true
   handlers:
@@ -183,10 +182,18 @@
         state: restarted
 
   tasks:
-    - name: Install radvd
+    - name: Install packages
       ansible.builtin.apt:
-        pkg: radvd
+        pkg:
+        - radvd
+        - isc-dhcp-client
         state: present
+
+    - name: Gather link local IPv6 LAN address
+      ansible.builtin.shell:
+        cmd: >
+          ip -6 -br address show {{ lan_interface }} scope link | awk '{ print $3 }'
+      register: result
 
     - name: Configure radvd
       ansible.builtin.copy:
@@ -203,16 +210,18 @@
               AdvPreferredLifetime 180;
               AdvValidLifetime 300;
             };
-            {% if lan_ipv6_local_address is defined -%}
+          {% if lan_ipv6_link_local_address is defined %}
             RDNSS {{ lan_ipv6_local_address }} {
               AdvRDNSSLifetime infinity;
             };
-            {%- endif %}
+          {% endif %}
           };
         owner: root
         group: root
         mode: '0644'
-      notify: Restart radvd
+      #notify: Restart radvd
+      vars:
+        lan_ipv6_link_local_address: result.stdout
 
     - name: Enable radvd
       ansible.builtin.systemd_service:
