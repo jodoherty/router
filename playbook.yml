@@ -228,3 +228,25 @@
         name: radvd
         state: started
         enabled: true
+
+
+- name: Dynamic DNS setup
+  hosts: routers
+  become: true
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        pkg:
+        - python3-boto3
+        - isc-dhcp-client
+        state: present
+
+    - name: Add dhclient hook to update Route53 DNS
+      ansible.builtin.copy:
+        dest: /etc/dhcp/dhclient-exit-hooks.d/update_route53.py
+        src: dhclient-exit-hooks.d/update_route53.py
+        owner: root
+        group: root
+        mode: '0755'
+
+
