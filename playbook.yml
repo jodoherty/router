@@ -211,7 +211,7 @@
               AdvValidLifetime 300;
             };
           {% if lan_ipv6_link_local_address is defined %}
-            RDNSS {{ lan_ipv6_local_address }} {
+            RDNSS {{ lan_ipv6_link_local_address }} {
               AdvRDNSSLifetime infinity;
             };
           {% endif %}
@@ -219,9 +219,9 @@
         owner: root
         group: root
         mode: '0644'
-      #notify: Restart radvd
+      notify: Restart radvd
       vars:
-        lan_ipv6_link_local_address: result.stdout
+        lan_ipv6_link_local_address: '{{ result.stdout | ansible.utils.ipaddr("address") }}'
 
     - name: Enable radvd
       ansible.builtin.systemd_service:
