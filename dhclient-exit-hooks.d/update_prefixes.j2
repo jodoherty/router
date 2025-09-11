@@ -1,19 +1,11 @@
 
-update_address() {
+update_ip6_address_from_prefix() {
   local wan_interface
   local lan_interface
   local address
 
   wan_interface="{{ wan_interface }}"
   lan_interface="{{ lan_interface }}"
-
-  [ "$reason" = "BOUND6" ] || exit 0
-
-  [ "$wan_interface" = "$interface" ] || exit 0
-
-  if [ -z "$new_ip6_prefix" ]; then
-    exit 0
-  fi
 
   address=$(echo $new_ip6_prefix | python3 -c 'import ipaddress; print(ipaddress.IPv6Network(input())[1])')
   echo $address >> /tmp/debug.log
@@ -25,6 +17,8 @@ update_address() {
 
 echo update_prefixes >> /tmp/debug.log
 date >> /tmp/debug.log
-update_address
-
+if [ "$reason" = "BOUND6" ] && [ "$wan_interface" = "$interface" ] && ! [ -z "$new_ip6_prefix" ]
+then
+  update_ip6_address_from_prefix
+fi
 
