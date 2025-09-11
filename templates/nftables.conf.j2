@@ -35,18 +35,21 @@ table inet filter {
 
     iifname "{{ lan_interface }}" accept
     oifname "{{ lan_interface }}" accept
-    {% if wg_interface is defined %}
+    {% if wg_interface is defined -%}
     iifname "{{ wg_interface }}" accept
     oifname "{{ wg_interface }}" accept
-    {% endif %}
+    {%- endif %}
+
   }
 
   chain nat {
     type nat hook postrouting priority srcnat; policy accept;
     ip saddr {{ address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ address | ansible.utils.ipaddr('network/prefix') }} masquerade
-    {% if wg_address is defined %}
-    ip saddr {{ wg_address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ wg_address | ansible.utils.ipaddr('network/prefix') }} masquerade
-    {% endif %}
+
+    {% if wg_ip4_address is defined -%}
+    ip saddr {{ wg_ip4_address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ wg_ip4_address | ansible.utils.ipaddr('network/prefix') }} masquerade
+    {%- endif %}
+
   }
 }
 
