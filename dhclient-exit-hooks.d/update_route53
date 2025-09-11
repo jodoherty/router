@@ -74,7 +74,6 @@ def update_aaaa_records(interface: str, address: ipaddress.IPv6Address) -> None:
 
 
 if __name__ == "__main__":
-    status = int(os.getenv("status", "0"))
     reason = os.getenv("reason")
     interface = os.getenv("interface")
 

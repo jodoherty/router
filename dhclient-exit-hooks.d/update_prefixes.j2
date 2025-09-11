@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+wan_interface="{{ wan_interface }}"
+lan_interface="{{ lan_interface }}"
+
+[ "$reason" = "BOUND6" ] || exit 0
+
+[ "$wan_interface" = "$interface" ] || exit 0
+
+if [ -z "$new_ip6_prefix" ]; then
+  exit 0
+fi
+
+address=$(echo $new_ip6_prefix | python3 -c 'import ipaddress; print(ipaddress.IPv6Network(input())[1])')
+
+ip -6 addr flush dev "$lan_interface" scope global
+ip -6 addr add "${address}/64" dev "$lan_interface" valid_lft 7200 preferred_lft 3600
+systemctl reload radvd.service
+

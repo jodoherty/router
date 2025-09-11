@@ -231,6 +231,15 @@
         state: started
         enabled: true
 
+    - name: Add dhclient hook to update IPv6 address
+      ansible.builtin.template:
+        dest: /etc/dhcp/dhclient-exit-hooks.d/update_prefixes
+        src: dhclient-exit-hooks.d/update_prefixes.j2
+        owner: root
+        group: root
+        mode: '0755'
+
+
 
 - name: Dynamic DNS setup
   hosts: routers
@@ -253,10 +262,9 @@
 
     - name: Add dhclient hook to update Route53 DNS
       ansible.builtin.copy:
-        dest: /etc/dhcp/dhclient-exit-hooks.d/update_route53.py
-        src: dhclient-exit-hooks.d/update_route53.py
+        dest: /etc/dhcp/dhclient-exit-hooks.d/update_route53
+        src: dhclient-exit-hooks.d/update_route53
         owner: root
         group: root
         mode: '0755'
-
 
