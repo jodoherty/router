@@ -7,18 +7,21 @@ update_ip6_address_from_prefix() {
   wan_interface="{{ wan_interface }}"
   lan_interface="{{ lan_interface }}"
 
-  address=$(echo $new_ip6_prefix | python3 -c 'import ipaddress; print(ipaddress.IPv6Network(input())[1])')
-  echo $address >> /tmp/debug.log
+  if [ "$reason" = "BOUND6" ] && [ "$wan_interface" = "$interface" ] && ! [ -z "$new_ip6_prefix" ]
+  then
 
-  ip -6 addr flush dev "$lan_interface" scope global
-  ip -6 addr add "${address}/64" dev "$lan_interface" valid_lft 7200 preferred_lft 3600
-  systemctl reload radvd.service
+    address=$(echo $new_ip6_prefix | python3 -c 'import ipaddress; print(ipaddress.IPv6Network(input())[1])')
+    echo $address >> /tmp/debug.log
+
+    ip -6 addr flush dev "$lan_interface" scope global
+    ip -6 addr add "${address}/64" dev "$lan_interface" valid_lft 7200 preferred_lft 3600
+    systemctl reload radvd.service
+
+  fi
 }
 
 echo update_prefixes >> /tmp/debug.log
 date >> /tmp/debug.log
-if [ "$reason" = "BOUND6" ] && [ "$wan_interface" = "$interface" ] && ! [ -z "$new_ip6_prefix" ]
-then
-  update_ip6_address_from_prefix
-fi
+update_ip6_address_from_prefix
+
 
