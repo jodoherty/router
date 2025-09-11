@@ -40,9 +40,10 @@ dns_servers:
         - ENC[AES256_GCM,data:rdBie7PxPCgw3luIB5ng8aru9nE=,iv:3BhqGj90vybKc/7pIw1qDcna/uZoZUMe25CQv/8OuQw=,tag:wa4JNwUgA+2ECwZfDC47Lg==,type:str]
 wireguard:
     wg0: ENC[AES256_GCM,data:lJq7XOrz+1tEc+u4ln0PZtLlmaxKYpd9mjM7e12JTTcyfdmKC9LBs83MZdHuM8jbRtuqPPFz6+AEwnd3yiw0gtS4aN/aI6Rg0jWnN4fzQXd+tWzJUi3A5H7CL6Hjtm7PqG90FGnpPgeCHEjaiNN1neVd/hTA1imzqkAHyT3QIwsC2fY43xcLGsQI+X1qzZF29GE=,iv:2a9hhhCPr7iIfE4ZTPOsDNpbn4wt9Pjc3glm9Ux2NX8=,tag:EXOghwu+6VCg4N6nN0Kmwg==,type:str]
+update_route53_config: ENC[AES256_GCM,data:7h4kXucOel/tMIm50lFm4PbR/Ju6MD3lpQyU6T9BDktEXyrcl897KE7gxJjHWPUv66NmRQOWpFtm6DeNsKH+pT8WVWRr+Y2afIh+wxyBbfYXegTNTQ6xl4z/lNc5UZhP88C6iHM+OsRiL77PxeDtZtLQWyYCnjg7om+kvqfuxrFtC8mLUv+vRvjbxmgEbiPnU+BDy9N5X8rg7Ockj6QpedChH2Uvf+JGwHG77F/1DTIfyScSc11+W35k+ZjoRrPwBrvliRFPqouYnlE8VTxBEYLGTbImhvvEtOTPQNcogcYKkMI4fCFctf/JKKzWv3canKMRLgMCMkoGuw2HiES+MLG1Vd0/f7GIF6PL7U7DYW6k/w6IgQIKHoL4,iv:8YhNevSwb6JOuIcVzeJJubRvy7qYuMISKHDpY4zcYII=,tag:AtpLfOY++rX09skObo/7VQ==,type:str]
 sops:
-    lastmodified: "2025-09-10T21:35:44Z"
-    mac: ENC[AES256_GCM,data:yjP3DKFuUsYcsItsDEpMTJEx8ira0P7E7YgvxgJfxLT7qPRGGDJbqUrJtVyoR67RDva9+VLA6cNI8Xtw9fu/kU/xGoj25icpWn79S/y2GjB48mgjvXXmz0hbxHfysiTY4YftnftmkgZ4zbp5VMCLPmJMb6KRDnL0+vLsAljplSw=,iv:grfAKpKhglGH5nrrKOAv00FgjjGN3f1vcAsuVN24fAY=,tag:ueRa9UnasJv8X1bfB5B7ew==,type:str]
+    lastmodified: "2025-09-11T00:40:39Z"
+    mac: ENC[AES256_GCM,data:Gz1nKiL5B6Fu278ZsYzvL0rEtWc5PPvgN26vy2pfpPRG4Y7jM628+10tq5f2ZDn7NsiBa901q4A+TtGRK90tc58+WgNDKCLQ8SoizGjIsXatJghGxc9/tOvZSELu0a5MS2S1RVEq9zGYhyDMtjg1S7Vxs7Tt8G5SFiKDF3vDT3Q=,iv:aJC36qkLejROUsd9ghM9HXKGgeAEYYbx+ywIx5hFh9M=,tag:83VEBrzXARlTUuzbGBh4iw==,type:str]
     pgp:
         - created_at: "2025-09-04T23:23:54Z"
           enc: |-

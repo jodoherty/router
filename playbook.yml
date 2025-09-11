@@ -193,6 +193,8 @@
       ansible.builtin.shell:
         cmd: >
           ip -6 -br address show {{ lan_interface }} scope link | awk '{ print $3 }'
+      changed_when: false
+      failed_when: false
       register: result
 
     - name: Configure radvd
@@ -240,6 +242,14 @@
         - python3-boto3
         - isc-dhcp-client
         state: present
+
+    - name: Configure route53 update hook
+      ansible.builtin.copy:
+        dest: /etc/route53_dyndns.json
+        content: '{{ update_route53_config }}'
+        owner: root
+        group: root
+        mode: '0600'
 
     - name: Add dhclient hook to update Route53 DNS
       ansible.builtin.copy:
