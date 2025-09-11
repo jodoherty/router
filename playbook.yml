@@ -237,7 +237,7 @@
         src: dhclient-exit-hooks.d/update_prefixes.j2
         owner: root
         group: root
-        mode: '0755'
+        mode: '0644'
 
 
 
@@ -260,11 +260,19 @@
         group: root
         mode: '0600'
 
+    - name: Add dhclient script to update Route53 DNS
+      ansible.builtin.copy:
+        dest: /usr/local/bin/update_route53
+        src: scripts/update_route53
+        owner: root
+        group: root
+        mode: '0755'
+
     - name: Add dhclient hook to update Route53 DNS
       ansible.builtin.copy:
         dest: /etc/dhcp/dhclient-exit-hooks.d/update_route53
         src: dhclient-exit-hooks.d/update_route53
         owner: root
         group: root
-        mode: '0755'
+        mode: '0644'
 
