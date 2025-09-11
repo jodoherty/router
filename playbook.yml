@@ -27,7 +27,6 @@
         - bridge-utils
         - resolvconf
         - isc-dhcp-client
-        - ipv6calc
         - net-tools
         - ethtool
         - nftables
@@ -118,8 +117,7 @@
         dest: /etc/unbound/unbound.conf.d/local-dns-server.conf
         content: |
           server:
-            interface: lo@53
-            interface: {{ lan_interface }}@53
+            interface-automatic: yes
             access-control: 0.0.0.0/0 allow
             access-control: ::/0 allow
         mode: '0644'

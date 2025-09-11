@@ -17,6 +17,7 @@ table inet filter {
 
 
     {% if wg_interface is defined -%}
+    iifname "{{ wg_interface }}" tcp dport {22, 80} accept
     iifname "{{ wg_interface }}" udp dport {53, 67, 547} accept
     {%- endif %}
 

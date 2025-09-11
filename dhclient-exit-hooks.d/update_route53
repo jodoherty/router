@@ -1,19 +1,10 @@
 
-echo update_route53 >> /tmp/debug.log
-date >> /tmp/debug.log
-echo /usr/local/bin/update_route53 \
-  --reason="$reason" \
-  --interface="$interface" \
-  --ip-address="$new_ip_address" \
-  --ip6-address="$new_ip6_address" \
-  --ip6-prefix-length="$new_ip6_prefixlen" \
-  --ip6-prefix="$new_ip6_prefix" >> /tmp/debug.log
 /usr/local/bin/update_route53 \
   --reason="$reason" \
   --interface="$interface" \
   --ip-address="$new_ip_address" \
   --ip6-address="$new_ip6_address" \
   --ip6-prefix-length="$new_ip6_prefixlen" \
-  --ip6-prefix="$new_ip6_prefix" >> /tmp/debug.log
+  --ip6-prefix="$new_ip6_prefix"
 
 
