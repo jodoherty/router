@@ -15,7 +15,9 @@ table inet filter {
     iifname "{{ lan_interface }}" udp dport {53, 67, 547} accept
     iifname "{{ wan_interface }}" udp dport 546 accept
 
-    iifname "{{ wan_interface }}" udp dport { 51820-51900 } accept
+    {% if wg_port is defined -%}
+    udp dport {{ wg_port }} accept
+    {%- endif %}
 
     ip protocol icmp accept
     meta l4proto ipv6-icmp accept
@@ -33,11 +35,18 @@ table inet filter {
 
     iifname "{{ lan_interface }}" accept
     oifname "{{ lan_interface }}" accept
+    {% if wg_interface is defined %}
+    iifname "{{ wg_interface }}" accept
+    oifname "{{ wg_interface }}" accept
+    {% endif %}
   }
 
   chain nat {
     type nat hook postrouting priority srcnat; policy accept;
     ip saddr {{ address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ address | ansible.utils.ipaddr('network/prefix') }} masquerade
+    {% if wg_address is defined %}
+    ip saddr {{ wg_address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ wg_address | ansible.utils.ipaddr('network/prefix') }} masquerade
+    {% endif %}
   }
 }
 

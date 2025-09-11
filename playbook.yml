@@ -13,6 +13,11 @@
         name: nftables
         state: restarted
 
+    - name: Restart wireguard
+      ansible.builtin.systemd_service:
+        name: 'wg-quick@{{ wg_interface }}'
+        state: restarted
+
   tasks:
     - name: Install networking tools
       ansible.builtin.apt:
@@ -27,12 +32,29 @@
         - ethtool
         - nftables
         - tang
+        - wireguard
         state: present
 
     - name: Configure hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"
       when: hostname is defined
+
+    - name: Configure wireguard
+      ansible.builtin.copy:
+        dest: /etc/wireguard/{{ wg_interface }}.conf
+        content: |
+          {{ wg_config }}
+        owner: root
+        group: root
+        mode: '0600'
+      notify: Restart wireguard
+
+    - name: Enable wireguard
+      ansible.builtin.systemd_service:
+        name: 'wg-quick@{{ wg_interface }}'
+        state: started
+        enabled: true
 
     - name: Enable IP Forwarding
       ansible.builtin.copy:
