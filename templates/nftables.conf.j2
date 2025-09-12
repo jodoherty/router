@@ -51,8 +51,20 @@ table inet filter {
 
   }
 
-  chain nat {
+  chain prerouting {
+    type nat hook prerouting priority dstnat; policy accept;
+
+{% if forwarded_ports is defined %}
+{% for entry in forwarded_ports %}
+    tcp dport {{ entry.wan_port }} dnat ip to {{ entry.lan_address }}:{{ entry.lan_port }}
+{% endfor %}
+{% endif %}
+
+  }
+
+  chain postrouting {
     type nat hook postrouting priority srcnat; policy accept;
+
     ip saddr {{ address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ address | ansible.utils.ipaddr('network/prefix') }} masquerade
 
 
