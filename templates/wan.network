@@ -1,0 +1,9 @@
+[Match]
+Name=enp1s0
+Type=ether
+
+[Network]
+DHCP=yes
+
+[DHCPv6]
+PrefixDelegationHint=::/56

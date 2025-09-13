@@ -65,9 +65,6 @@ table inet filter {
   chain postrouting {
     type nat hook postrouting priority srcnat; policy accept;
 
-    ip saddr {{ address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ address | ansible.utils.ipaddr('network/prefix') }} masquerade
-
-
     {% if wg_ip4_address is defined -%}
     ip saddr {{ wg_ip4_address | ansible.utils.ipaddr('network/prefix') }} ip daddr != {{ wg_ip4_address | ansible.utils.ipaddr('network/prefix') }} masquerade
     {%- endif %}
@@ -76,7 +73,6 @@ table inet filter {
     {% if wg_ip6_address is defined -%}
     ip6 saddr {{ wg_ip6_address | ansible.utils.ipaddr('network/prefix') }} ip6 daddr != {{ wg_ip6_address | ansible.utils.ipaddr('network/prefix') }} masquerade
     {%- endif %}
-
 
   }
 }

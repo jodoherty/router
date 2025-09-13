@@ -1,37 +1,19 @@
 ---
 
-- name: Basic networking setup
+- name: Network configuration
   hosts: routers
   become: true
   handlers:
-    - name: Reload sysctl
-      ansible.builtin.command:
-        cmd: sysctl --system
-
-    - name: Restart nftables
+    - name: Restart systemd-networkd
       ansible.builtin.systemd_service:
-        name: nftables
-        state: restarted
-
-    - name: Restart wireguard
-      ansible.builtin.systemd_service:
-        name: 'wg-quick@{{ wg_interface }}'
+        name: systemd-networkd
         state: restarted
 
   tasks:
     - name: Install networking tools
       ansible.builtin.apt:
         pkg:
-        - ca-certificates
-        - curl
-        - bridge-utils
-        - resolvconf
-        - isc-dhcp-client
-        - net-tools
-        - ethtool
-        - nftables
-        - tang
-        - wireguard
+        - systemd-resolved
         state: present
 
     - name: Configure hostname
@@ -39,6 +21,52 @@
         name: "{{ hostname }}"
       when: hostname is defined
 
+    - name: Configure wan_interface
+      ansible.builtin.template:
+        src: templates/wan.network
+        dest: /etc/systemd/network/wan.network
+        owner: root
+        group: root
+        mode: 0644
+      notify: Restart systemd-networkd
+
+    - name: Configure lan_interface
+      ansible.builtin.template:
+        src: templates/lan.network
+        dest: /etc/systemd/network/lan.network
+        owner: root
+        group: root
+        mode: 0644
+      notify: Restart systemd-networkd
+
+    - name: Enable systemd-networkd
+      ansible.builtin.systemd_service:
+        name: systemd-networkd
+        state: started
+        enabled: true
+
+    - name: Enable systemd-resolved
+      ansible.builtin.systemd_service:
+        name: systemd-resolved
+        state: started
+        enabled: true
+
+    - name: Configure stub resolv.conf
+      ansible.builtin.file:
+        src: /run/systemd/resolve/stub-resolv.conf
+        dest: /etc/resolv.conf
+        state: link
+        force: yes
+
+- name: VPN setup
+  hosts: routers
+  become: true
+  handlers:
+    - name: Restart wireguard
+      ansible.builtin.systemd_service:
+        name: 'wg-quick@{{ wg_interface }}'
+        state: restarted
+  tasks:
     - name: Configure wireguard
       ansible.builtin.copy:
         dest: /etc/wireguard/{{ wg_interface }}.conf
@@ -55,24 +83,26 @@
         state: started
         enabled: true
 
+
+- name: Firewall and forwarding setup
+  hosts: routers
+  become: true
+  handlers:
+    - name: Reload sysctl
+      ansible.builtin.command:
+        cmd: sysctl --system
+
+    - name: Restart nftables
+      ansible.builtin.systemd_service:
+        name: nftables
+        state: restarted
+  tasks:
     - name: Enable IP Forwarding
       ansible.builtin.copy:
         dest: /etc/sysctl.d/forwarding.conf
         content: |
           net.ipv4.ip_forward = 1
           net.ipv6.conf.all.forwarding = 1
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Reload sysctl
-
-    - name: Ignore IPv6 router advertisements on LAN interface
-      ansible.builtin.copy:
-        dest: /etc/sysctl.d/lan_ipv6_options.conf
-        content: |
-          net.ipv6.conf.{{ wan_interface }}.accept_ra = 2
-          net.ipv6.conf.{{ lan_interface }}.accept_ra = 0
-          net.ipv6.conf.{{ lan_interface }}.accept_dad = 0
         owner: root
         group: root
         mode: '0644'
@@ -117,7 +147,10 @@
         dest: /etc/unbound/unbound.conf.d/local-dns-server.conf
         content: |
           server:
-            interface-automatic: yes
+            interface: {{ lan_interface }}@53
+            interface: {{ wg_ip4_address | ansible.utils.ipaddr("address") }}@53
+            interface: {{ wg_ip6_address | ansible.utils.ipaddr("address") }}@53
+            ip-freebind: yes
             access-control: 0.0.0.0/0 allow
             access-control: ::/0 allow
         mode: '0644'
@@ -131,134 +164,11 @@
         state: started
         enabled: true
 
-- name: DHCP Server
-  hosts: routers
-  become: true
-  handlers:
-    - name: Restart isc-dhcp-server
+    - name: Disable unbound-resolvconf
       ansible.builtin.systemd_service:
-        name: isc-dhcp-server
-        state: restarted
-  tasks:
-    - name: Install isc-dhcp-server
-      ansible.builtin.apt:
-        pkg: isc-dhcp-server
-        state: present
-
-    - name: Enable DHCP server on {{ lan_interface }}
-      ansible.builtin.lineinfile:
-        path: /etc/default/isc-dhcp-server
-        regexp: '^INTERFACESv4='
-        line: 'INTERFACESv4="{{ lan_interface }}"'
-      notify: Restart isc-dhcp-server
-
-    - name: Set domain name
-      ansible.builtin.lineinfile:
-        path: /etc/dhcp/dhcpd.conf
-        regexp: '^option domain-name '
-        line: 'option domain-name "{{ domain }}";'
-      notify: Restart isc-dhcp-server
-
-    - name: Set DHCP DNS servers
-      ansible.builtin.lineinfile:
-        path: /etc/dhcp/dhcpd.conf
-        regexp: '^option domain-name-servers '
-        line: 'option domain-name-servers {{ address | ansible.utils.ipaddr("address") }};'
-      notify: Restart isc-dhcp-server
-
-    - name: Configure DHCP subnet
-      ansible.builtin.blockinfile:
-        path: /etc/dhcp/dhcpd.conf
-        content: |
-          authoritative;
-
-          subnet {{ address | ansible.utils.ipaddr('network') }} netmask {{ address | ansible.utils.ipaddr('netmask') }} {
-            range {{ dhcp_range_start }} {{ dhcp_range_end }};
-            option routers {{ address | ansible.utils.ipaddr('address') }};
-          }
-
-          {% for host in dhcp_reservations %}
-          host {{ host.name }} {
-            hardware ethernet {{ host.mac }};
-            fixed-address {{ host.address | ansible.utils.ipv4('address') }};
-          }
-          {% endfor %}
-      notify: Restart isc-dhcp-server
-
-    - name: Enable isc-dhcp-server
-      ansible.builtin.systemd_service:
-        name: isc-dhcp-server
-        state: started
-        enabled: true
-
-
-- name: IPv6 Prefix Delegation Setup
-  hosts: routers
-  become: true
-  handlers:
-    - name: Restart radvd
-      ansible.builtin.systemd_service:
-        name: radvd
-        state: restarted
-
-  tasks:
-    - name: Install packages
-      ansible.builtin.apt:
-        pkg:
-        - radvd
-        - isc-dhcp-client
-        state: present
-
-    - name: Gather link local IPv6 LAN address
-      ansible.builtin.shell:
-        cmd: >
-          ip -6 -br address show {{ lan_interface }} scope link | awk '{ print $3 }'
-      changed_when: false
-      failed_when: false
-      register: result
-
-    - name: Configure radvd
-      ansible.builtin.copy:
-        dest: /etc/radvd.conf
-        content: |
-          interface {{ lan_interface }} {
-            AdvSendAdvert on;
-            MinRtrAdvInterval 10;
-            MaxRtrAdvInterval 30;
-            AdvDefaultLifetime 1800;
-            AdvDefaultPreference high;
-            prefix ::/64 {
-              AdvRouterAddr on;
-              AdvPreferredLifetime 180;
-              AdvValidLifetime 300;
-            };
-          {% if lan_ipv6_link_local_address is defined %}
-            RDNSS {{ lan_ipv6_link_local_address }} {
-              AdvRDNSSLifetime infinity;
-            };
-          {% endif %}
-          };
-        owner: root
-        group: root
-        mode: '0644'
-      notify: Restart radvd
-      vars:
-        lan_ipv6_link_local_address: '{{ result.stdout | ansible.utils.ipaddr("address") }}'
-
-    - name: Enable radvd
-      ansible.builtin.systemd_service:
-        name: radvd
-        state: started
-        enabled: true
-
-    - name: Add dhclient hook to update IPv6 address
-      ansible.builtin.template:
-        dest: /etc/dhcp/dhclient-exit-hooks.d/update_prefixes
-        src: dhclient-exit-hooks.d/update_prefixes.j2
-        owner: root
-        group: root
-        mode: '0644'
-
+        name: unbound-resolvconf
+        state: stopped
+        enabled: false
 
 
 - name: Dynamic DNS setup
@@ -269,10 +179,10 @@
       ansible.builtin.apt:
         pkg:
         - python3-boto3
-        - isc-dhcp-client
+        - networkd-dispatcher
         state: present
 
-    - name: Configure route53 update hook
+    - name: Add Route53 DNS update configuration file
       ansible.builtin.copy:
         dest: /etc/route53_dyndns.json
         content: '{{ update_route53_config }}'
@@ -280,7 +190,7 @@
         group: root
         mode: '0600'
 
-    - name: Add dhclient script to update Route53 DNS
+    - name: Add script to update Route53 DNS
       ansible.builtin.copy:
         dest: /usr/local/bin/update_route53
         src: scripts/update_route53
@@ -288,11 +198,25 @@
         group: root
         mode: '0755'
 
-    - name: Add dhclient hook to update Route53 DNS
-      ansible.builtin.copy:
-        dest: /etc/dhcp/dhclient-exit-hooks.d/update_route53
-        src: dhclient-exit-hooks.d/update_route53
+    - name: Ensure networkd-dispatcher hook directory is present
+      ansible.builtin.file:
+        path: /etc/networkd-dispatcher/configured.d
+        state: directory
         owner: root
         group: root
-        mode: '0644'
+        mode: 0755
+
+    - name: Add networkd-dispatcher hook to call Route53 update script
+      ansible.builtin.template:
+        src: templates/network_configured
+        dest: /etc/networkd-dispatcher/configured.d/network_configured
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: Enable networkd-dispatcher
+      ansible.builtin.systemd_service:
+        name: networkd-dispatcher
+        state: started
+        enabled: true
 

@@ -76,33 +76,21 @@ def update_aaaa_records(interface: str, address: ipaddress.IPv6Address) -> None:
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reason", type=str)
     parser.add_argument("--interface", type=str)
     parser.add_argument("--ip-address", type=str)
     parser.add_argument("--ip6-address", type=str)
-    parser.add_argument("--ip6-prefix-length", type=str)
-    parser.add_argument("--ip6-prefix", type=str)
     args = parser.parse_args()
-    reason = args.reason
     interface = args.interface
 
-    if interface and reason in ("BOUND", "RENEW", "REBIND", "REBOOT"):
-        new_ip_address_value = args.ip_address
-        new_ip_address = None
-        if new_ip_address_value:
-            new_ip_address = ipaddress.IPv4Address(new_ip_address_value)
-        if new_ip_address and new_ip_address.is_global:
-            print(f"updating DNS A records")
-            update_a_records(interface, new_ip_address)
-    elif interface and reason in ("BOUND6", "RENEW6", "REBIND6"):
-        new_ip6_address_value = args.ip6_address
-        new_ip6_prefixlen_value = args.ip6_prefix_length
-        new_ip6_prefix_value = args.ip6_prefix
-        ip6_address = None
-        if new_ip6_address_value and new_ip6_prefixlen_value:
-            ip6_address = ipaddress.IPv6Address(new_ip6_address_value + "/" + new_ip6_prefixlen_value)
-        elif new_ip6_prefix_value:
-            ip6_address = ipaddress.IPv6Network(new_ip6_prefix_value)[1]
-        if ip6_address and ip6_address.is_global:
-            print("updating DNS AAAA records")
-            update_aaaa_records(interface, ip6_address)
+    ip_address = None
+    if args.ip_address:
+        ip_address = ipaddress.IPv4Address(args.ip_address)
+    if ip_address and ip_address.is_global:
+        print(f"updating DNS A records")
+        update_a_records(interface, ip_address)
+    ip6_address = None
+    if args.ip6_address:
+        ip6_address = ipaddress.IPv6Address(args.ip6_address)
+    if ip6_address and ip6_address.is_global:
+        print("updating DNS AAAA records")
+        update_aaaa_records(interface, ip6_address)

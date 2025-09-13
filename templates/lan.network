@@ -1,0 +1,31 @@
+[Match]
+Name={{ lan_interface }}
+Type=ether
+
+[Network]
+Address={{ address }}
+ConfigureWithoutCarrier=yes
+DHCPServer=true
+IPv6PrivacyExtensions=no
+IPv6SendRA=yes
+IPMasquerade=ipv4
+DHCPv6PrefixDelegation=yes
+
+[DHCPServer]
+UplinkInterface={{ wan_interface }}
+ServerAddress={{ address }}
+PoolOffset=40
+PoolSize=180
+EmitDNS=yes
+DNS=_server_address
+
+[IPv6SendRA]
+UplinkInterface={{ wan_interface }}
+EmitDNS=yes
+DNS=_link_local
+
+{% for host in dhcp_reservations %}
+[DHCPServerStaticLease]
+MACAddress={{ host.mac }}
+Address={{ host.address | ansible.utils.ipv4('address') }}
+{% endfor %}

@@ -1,0 +1,33 @@
+#!/bin/sh
+
+wan_interface="{{ wan_interface }}"
+lan_interface="{{ lan_interface }}"
+
+ip4_address_with_len=$(ip -4 -br address show enp2s0 scope global | awk '{ print $3 }')
+if ! [ -z "$ip4_address_with_len" ]
+then
+  ip4_address=$(echo $ip4_address_with_len | python3 -c 'import ipaddress; print(ipaddress.IPv4Interface(input()).ip)')
+fi
+
+ip6_address_with_len=$(ip -6 -br address show enp2s0 scope global | awk '{ print $3 }')
+
+if ! [ -z "$ip6_address_with_len" ]
+then
+  ip6_address=$(echo $ip6_address_with_len | python3 -c 'import ipaddress; print(ipaddress.IPv6Interface(input()).ip)')
+fi
+
+if [ "$IFACE" = "$lan_interface" ] || [ "$IFACE" = "$wan_interface" ]
+then
+  date >> /tmp/debug.log
+  echo $ip4_address >> /tmp/debug.log
+  echo $ip6_address >> /tmp/debug.log
+  echo /usr/local/bin/update_route53 \
+    --interface="$wan_interface" \
+    --ip-address="$ip4_address" \
+    --ip6-address="$ip6_address" >> /tmp/debug.log
+  /usr/local/bin/update_route53 \
+    --interface="$wan_interface" \
+    --ip-address="$ip4_address" \
+    --ip6-address="$ip6_address" >> /tmp/debug.log
+
+fi
