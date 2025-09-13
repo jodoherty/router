@@ -9,9 +9,6 @@ past. The current hardware is a Beelink EQ14:
 
 https://www.bee-link.com/products/beelink-eq14-n150
 
-I utilize dhclient hooks to update DNS entries in a Route53 zone and I
-configure a WireGuard VPN for use with my laptops.
-
 Everything needed is in the main Debian repository, installable via pip into a
 venv from the `requirements.txt`, or included in this git repository. There are
 no special dependencies.
@@ -20,6 +17,14 @@ Secrets are managed via ansible vault. Password storage is implemented using
 pass and my separate password-storage repository.
 
 ## Setup and Usage
+
+Install Debian 13 onto your hardware. Then create an inventory configuration
+with the required variables.
+
+(TODO: document variables)
+
+(TODO: test and fix issues switching interfaces from /etc/network/interfaces to
+systemd-networkd)
 
 Install and configure `pass` and install `python3-venv`.
 
