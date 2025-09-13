@@ -3,13 +3,13 @@
 wan_interface="{{ wan_interface }}"
 lan_interface="{{ lan_interface }}"
 
-ip4_address_with_len=$(ip -4 -br address show enp2s0 scope global | awk '{ print $3 }')
+ip4_address_with_len=$(ip -4 -br address show $wan_interface scope global | awk '{ print $3 }')
 if ! [ -z "$ip4_address_with_len" ]
 then
   ip4_address=$(echo $ip4_address_with_len | python3 -c 'import ipaddress; print(ipaddress.IPv4Interface(input()).ip)')
 fi
 
-ip6_address_with_len=$(ip -6 -br address show enp2s0 scope global | awk '{ print $3 }')
+ip6_address_with_len=$(ip -6 -br address show $lan_interface scope global | awk '{ print $3 }')
 
 if ! [ -z "$ip6_address_with_len" ]
 then
