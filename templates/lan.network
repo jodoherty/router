@@ -8,7 +8,6 @@ ConfigureWithoutCarrier=yes
 DHCPServer=true
 IPv6PrivacyExtensions=no
 IPv6SendRA=yes
-IPMasquerade=ipv4
 DHCPv6PrefixDelegation=yes
 
 [DHCPServer]
@@ -28,4 +27,5 @@ DNS=_link_local
 [DHCPServerStaticLease]
 MACAddress={{ host.mac }}
 Address={{ host.address | ansible.utils.ipv4('address') }}
+
 {% endfor %}
