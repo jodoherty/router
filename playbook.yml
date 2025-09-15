@@ -4,6 +4,13 @@
   hosts: routers
   become: true
   handlers:
+    - name: Reload udev rules and devices
+      ansible.builtin.shell:
+        cmd: |
+          nft flush ruleset
+          udevadm control --reload-rules
+          udevadm trigger
+
     - name: Restart systemd-networkd
       ansible.builtin.systemd_service:
         name: systemd-networkd
@@ -20,6 +27,15 @@
       ansible.builtin.hostname:
         name: "{{ hostname }}"
       when: hostname is defined
+
+    - name: Set persistent ethernet device name rules
+      ansible.builtin.template:
+        src: templates/10-persistent-netdev.rules
+        dest: /etc/udev/rules.d/10-persistent-netdev.rules
+        owner: root
+        group: root
+        mode: 0644
+      notify: Reload udev rules and devices
 
     - name: Configure wan_interface
       ansible.builtin.template:

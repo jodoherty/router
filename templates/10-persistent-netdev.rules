@@ -1,0 +1,3 @@
+{% for interface in interfaces %}
+SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="{{ interface.mac_address }}", NAME="{{ interface.name }}"
+{% endfor %}
