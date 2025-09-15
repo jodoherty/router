@@ -1,5 +1,5 @@
 [Match]
-Name=enp1s0
+Name={{ wan_interface }}
 Type=ether
 
 [Network]
