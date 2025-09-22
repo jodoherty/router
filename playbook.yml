@@ -14,7 +14,14 @@
       ansible.builtin.apt:
         pkg:
         - systemd-resolved
+        - systemd-timesyncd
         state: present
+
+    - name: Enable systemd-timesyncd
+      ansible.builtin.systemd_service:
+        name: systemd-timesyncd
+        state: started
+        enabled: true
 
     - name: Configure hostname
       ansible.builtin.hostname:
@@ -127,48 +134,46 @@
   hosts: routers
   become: true
   handlers:
-    - name: Restart unbound
+    - name: Restart dnsmasq
       ansible.builtin.systemd_service:
-        name: unbound
+        name: dnsmasq
         state: restarted
 
   tasks:
     - name: Install DNS packages
       ansible.builtin.apt:
         pkg:
-        - unbound
-        - unbound-anchor
+        - dnsmasq
         - bind9-utils
         - bind9-dnsutils
         state: present
 
-    - name: Configure unbound
+    - name: Configure dnsmasq
       ansible.builtin.copy:
-        dest: /etc/unbound/unbound.conf.d/local-dns-server.conf
+        dest: /etc/dnsmasq.d/local-dns-server.conf
         content: |
-          server:
-            interface: {{ lan_interface }}@53
-            interface: {{ wg_ip4_address | ansible.utils.ipaddr("address") }}@53
-            interface: {{ wg_ip6_address | ansible.utils.ipaddr("address") }}@53
-            ip-freebind: yes
-            access-control: 0.0.0.0/0 allow
-            access-control: ::/0 allow
+          bind-dynamic
+          interface={{ lan_interface }}
+          interface={{ wg_interface }}
+          no-resolv
+          {% for server in dns_servers.ipv4 %}
+          server={{ server }}
+          {% endfor %}
+          {% for server in dns_servers.ipv6 %}
+          server={{ server }}
+          {% endfor %}
+          conf-file=/usr/share/dnsmasq/trust-anchors.conf
+          dnssec
         mode: '0644'
         owner: root
         group: root
-      notify: Restart unbound
+      notify: Restart dnsmasq
 
-    - name: Enable unbound
+    - name: Enable dnsmasq
       ansible.builtin.systemd_service:
-        name: unbound
+        name: dnsmasq
         state: started
         enabled: true
-
-    - name: Disable unbound-resolvconf
-      ansible.builtin.systemd_service:
-        name: unbound-resolvconf
-        state: stopped
-        enabled: false
 
 
 - name: Dynamic DNS setup

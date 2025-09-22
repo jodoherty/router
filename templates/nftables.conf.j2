@@ -7,8 +7,7 @@ table inet filter {
     type filter hook input priority filter
     policy drop
 
-    ct state invalid drop
-    ct state {established, related} accept
+    ct state vmap { established : accept, related : accept, invalid : drop }
     iif lo accept
 
     iifname "{{ lan_interface }}" tcp dport {22, 80} accept
@@ -41,19 +40,14 @@ table inet filter {
     type filter hook forward priority filter
     policy drop
 
-    ct state invalid drop
+    ct state vmap { established : accept, related : accept, invalid : drop }
 
     iifname "{{ lan_interface }}" accept
-    oifname "{{ lan_interface }}" ct state {established, related} accept
 
     {% if wg_interface is defined -%}
     iifname "{{ wg_interface }}" accept
-    oifname "{{ wg_interface }}" ct state {established, related} accept
     {%- endif %}
 
-
-    pkttype host limit rate 5/second counter reject with icmpx type admin-prohibited
-    counter
   }
 
   chain prerouting {
