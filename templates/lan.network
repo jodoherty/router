@@ -13,10 +13,11 @@ DHCPv6PrefixDelegation=yes
 [DHCPServer]
 UplinkInterface={{ wan_interface }}
 ServerAddress={{ address }}
-PoolOffset=40
-PoolSize=180
+PoolOffset=70
+PoolSize=130
 EmitDNS=yes
 DNS=_server_address
+LeaseLifetimeSec=3600
 
 [IPv6SendRA]
 UplinkInterface={{ wan_interface }}
